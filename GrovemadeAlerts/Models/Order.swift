@@ -80,7 +80,7 @@ class Order: Identifiable, ObservableObject {
                 equals = false
                 break
             }
-            if product.state != otherProduct.state || product.fulfilledQuantity != otherProduct.fulfilledQuantity {
+            if product.state != otherProduct.state || product.fulfilledQuantity != otherProduct.fulfilledQuantity || product.estimatedShippingDate != otherProduct.estimatedShippingDate {
                 equals = false
                 break
             }
