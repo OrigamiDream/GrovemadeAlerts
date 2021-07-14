@@ -66,10 +66,11 @@ class Order: Identifiable, ObservableObject {
     }
     
     #if DEBUG
-    convenience init(id: UUID, orderID: String, email: String, state: OrderState, products: [Product]) {
+    convenience init(id: UUID, orderID: String, email: String, state: OrderState, products: [Product], isUpdated: Bool = false) {
         self.init(id: id, orderID: orderID, email: email, state: state, placedDate: "Your order was placed on March 17, 2021.", completionDate: state == .delivered ? "Order was completed on April 26, 2021." : nil)
         
         self.products = products
+        self.isUpdated = isUpdated
     }
     #endif
     

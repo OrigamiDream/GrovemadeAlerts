@@ -136,13 +136,20 @@ let modelInstance = Model(orders: [
         Product(id: UUID(), name: "Desk Shelf", quantity: 1, manufacturedQuantity: 0, shippedQuantity: 0, estimatedShippingDate: "Thursday 08/26/2021", state: .ordered),
         Product(id: UUID(), name: "Magic Trackpad Tray", quantity: 1, manufacturedQuantity: 0, shippedQuantity: 0, estimatedShippingDate: "Thursday 08/26/2021", state: .ordered)
     ]),
-    Order(id: UUID(), orderID: "73624", email: "tcook@apple.com", state: .manufacturing, products: [
-        Product(id: UUID(), name: "Laptop Riser", quantity: 1, manufacturedQuantity: 1, shippedQuantity: 0, estimatedShippingDate: "Thursday 08/26/2021", state: .manufactured),
+    Order(id: UUID(), orderID: "73624", email: "j.appleseed@icloud.com", state: .manufacturing, products: [
+        Product(id: UUID(), name: "Laptop Riser: Walnut", quantity: 1, manufacturedQuantity: 1, shippedQuantity: 0, estimatedShippingDate: "Thursday 08/26/2021", state: .manufactured),
         Product(id: UUID(), name: "Wool Felt", quantity: 1, manufacturedQuantity: 0, shippedQuantity: 0, estimatedShippingDate: "Thursday 08/26/2021", state: .manufactured),
-        Product(id: UUID(), name: "Desk Tray", quantity: 1, manufacturedQuantity: 0, shippedQuantity: 0, estimatedShippingDate: "Thursday 08/26/2021", state: .manufactured)
+        Product(id: UUID(), name: "Desk Tray: Walnut", quantity: 1, manufacturedQuantity: 0, shippedQuantity: 0, estimatedShippingDate: "Thursday 08/26/2021", state: .manufactured)
     ]),
     Order(id: UUID(), orderID: "47098", email: "j.appleseed@icloud.com", state: .shipped, products: [
         Product(id: UUID(), name: "Wood Headphone Stand", quantity: 1, manufacturedQuantity: 1, shippedQuantity: 1, estimatedShippingDate: "Thursday 08/26/2021", state: .shipped),
+    ], isUpdated: true),
+    Order(id: UUID(), orderID: "25227", email: "j.appleseed@icloud.com", state: .delivered, products: [
+        Product(id: UUID(), name: "Wood Wall Shelf 54\": Walnut", quantity: 2, manufacturedQuantity: 2, shippedQuantity: 2, estimatedShippingDate: "Thursday 08/26/2021", state: .shipped),
+    ]),
+    Order(id: UUID(), orderID: "19533", email: "j.appleseed@icloud.com", state: .delivered, products: [
+        Product(id: UUID(), name: "Brass and Walnut Pen Stand Set", quantity: 1, manufacturedQuantity: 1, shippedQuantity: 1, estimatedShippingDate: "Thursday 08/26/2021", state: .shipped),
+        Product(id: UUID(), name: "Brass Notepad", quantity: 1, manufacturedQuantity: 1, shippedQuantity: 1, estimatedShippingDate: "Thursday 08/26/2021", state: .shipped)
     ])
 ])
 #endif
