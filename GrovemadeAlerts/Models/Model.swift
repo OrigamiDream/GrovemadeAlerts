@@ -74,7 +74,7 @@ class Model: ObservableObject {
     func refresh() -> Int {
         var updated = 0
         let queue = DispatchQueue(label: "grovemade-retrieval-queue")
-        orders.filter { $0.state != .delivered }.forEach { order in
+        orders.forEach { order in
             var done: AnyCancellable?
             var products: [Product] = []
             var placedDateString: String?
@@ -103,13 +103,16 @@ class Model: ObservableObject {
             group.wait()
             assert(done != nil)
             
-            if success && (!order.isEquivalent(otherProducts: products) || order.placedDate != placedDateString || order.completionDate != completionDateString) {
+            let newState = OrderState.fromProducts(products: products, completionDate: completionDateString)
+            
+            if success && (!order.isEquivalent(otherProducts: products) || order.placedDate != placedDateString || order.completionDate != completionDateString || order.state != newState) {
                 updated += 1
                 DispatchQueue.main.async {
                     withAnimation {
                         order.products = products
                         order.placedDate = placedDateString ?? ""
                         order.completionDate = completionDateString
+                        order.state = newState
                         order.isUpdated = true
                     }
                 }

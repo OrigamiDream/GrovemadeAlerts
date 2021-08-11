@@ -82,17 +82,7 @@ struct OrderRegistrar: View {
             }, trailing: Button(action: {
                 presentationMode.wrappedValue.dismiss()
                 
-                var state = OrderState.ordered
-                if completionDate != nil {
-                    state = .delivered
-                } else if retrievedProducts.allSatisfy({ $0.quantity == 0 && $0.manufacturedQuantity == 0 && $0.shippedQuantity == 0 }) {
-                    state = .ordered
-                } else if retrievedProducts.contains(where: { $0.manufacturedQuantity > 0 && $0.shippedQuantity == 0 }) {
-                    state = .manufacturing
-                } else if retrievedProducts.allSatisfy({ $0.shippedQuantity == $0.manufacturedQuantity }) {
-                    state = .shipped
-                }
-                
+                let state = OrderState.fromProducts(products: retrievedProducts, completionDate: completionDate)
                 let order = Order(id: UUID(), orderID: orderID.value, email: email, state: state, placedDate: placedDate ?? "", completionDate: completionDate)
                 order.products = [Product](retrievedProducts)
                 

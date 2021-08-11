@@ -14,17 +14,20 @@ struct OrderRow: View {
     var body: some View {
         VStack(alignment: .leading) {
             HStack {
-                Text(order.orderID)
-                    .font(.title.monospacedDigit())
-                    .padding([.bottom], 5)
-                
-                if order.isUpdated {
-                    VStack {
-                        Spacer()
-                        Circle()
-                            .fill(Color.accentColor)
-                            .frame(width: 7, height: 7, alignment: .center)
-                        Spacer()
+                ZStack(alignment: .leading) {
+                    Text(order.orderID)
+                        .font(.title.monospacedDigit())
+                        .padding([.bottom], 5)
+                    
+                    if order.isUpdated {
+                        VStack {
+                            Spacer()
+                            Circle()
+                                .fill(Color.accentColor)
+                                .frame(width: 7, height: 7, alignment: .center)
+                            Spacer()
+                        }
+                        .offset(x: -15, y: -3)
                     }
                 }
                 

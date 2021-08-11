@@ -29,6 +29,29 @@ enum OrderState: Int, Comparable, Codable {
     static func < (lhs: OrderState, rhs: OrderState) -> Bool {
         return lhs.rawValue < rhs.rawValue
     }
+    
+    static func fromProducts(products: [Product], completionDate: String?) -> OrderState {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "MM/dd/yyyy"
+        dateFormatter.timeZone = TimeZone.current
+        let latestDate = products
+            .map { $0.estimatedShippingDate.split(separator: " ").last }
+            .filter { $0 != nil }
+            .map { dateFormatter.date(from: String(describing: $0!))! }
+            .max()
+        
+        var state = OrderState.ordered
+        if completionDate != nil && Date() > latestDate! {
+            state = .delivered
+        } else if products.allSatisfy({ $0.quantity == 0 && $0.manufacturedQuantity == 0 && $0.shippedQuantity == 0 }) {
+            state = .ordered
+        } else if products.contains(where: { $0.manufacturedQuantity > 0 && $0.shippedQuantity == 0 }) {
+            state = .manufacturing
+        } else if products.allSatisfy({ $0.shippedQuantity == $0.manufacturedQuantity }) {
+            state = .shipped
+        }
+        return state
+    }
 }
 
 class Order: Identifiable, ObservableObject {
