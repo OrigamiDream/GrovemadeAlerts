@@ -13,6 +13,13 @@ enum SortingOption: String, CaseIterable, Codable {
     case email = "Email"
 }
 
+struct GrovemadeRetrievalInfo {
+    let response: GrovemadeResponse
+    let success: Bool
+    let order: Order
+    let shippedPackages: ShippedPackages?
+}
+
 class Model: ObservableObject {
     
     @Published var orders: [Order]
@@ -72,66 +79,79 @@ class Model: ObservableObject {
     
     @discardableResult
     func refresh() -> Int {
-        var updated = 0
-        let queue = DispatchQueue(label: "grovemade-retrieval-queue")
-        orders.forEach { order in
-            var done: AnyCancellable?
-            var products: [Product] = []
-            var placedDateString: String?
-            var completionDateString: String?
-            var shippingInfo: ShippedPackages?
-            var success = false
-            
-            let group = DispatchGroup()
+        let before = DispatchTime.now()
+        
+        let group = DispatchGroup()
+        var responses = [(response: GrovemadeResponse, success: Bool, order: Order)]()
+        
+        for order in orders {
             group.enter()
             
-            let subject = PassthroughSubject<GrovemadeResponse, Error>()
-            retrieveOrderInformationFromGrovemade(queue: queue, subject: subject, orderID: order.orderID, email: order.email)
-            done = subject.sink { completion in
-                switch completion {
-                case .finished:
-                    success = true
-                case .failure(_):
-                    success = false
-                }
-                group.leave()
-            } receiveValue: { response in
-                placedDateString = response.placedDate
-                completionDateString = response.completionDate
-                products = response.products
+            let dispatchQueue = DispatchQueue(label: "grovemade-retrieval-queue-\(order.orderID)")
+            DispatchQueue(label: "grovemade-retrieval-refresh-\(order.orderID)").async {
+                let retrievalGroup = DispatchGroup()
+                retrievalGroup.enter()
                 
-                if let trackingNumber = response.trackingNumber,
-                   let status = response.deliveryStatus,
-                   let estimatedDelivery = response.estimatedDelivery,
-                   let location = response.deliveryLocation {
-                    
-                    shippingInfo = ShippedPackages(trackingNumber: trackingNumber, status: status, estimatedDelivery: estimatedDelivery, location: location)
+                var done: AnyCancellable?
+                var success = false
+                
+                let subject = PassthroughSubject<GrovemadeResponse, Error>()
+                retrieveOrderInformationFromGrovemade(queue: dispatchQueue, subject: subject, orderID: order.orderID, email: order.email)
+                done = subject.sink { completion in
+                    switch completion {
+                    case .finished:
+                        success = true
+                    case .failure(_):
+                        success = false
+                    }
+                    retrievalGroup.leave()
+                } receiveValue: { response in
+                    responses += [(response, success, order)]
                 }
+                assert(done != nil)
+                retrievalGroup.wait()
+                group.leave()
             }
-            
-            group.wait()
-            assert(done != nil)
-            
-            let newState = OrderState.fromProducts(shippedPackages: shippingInfo, products: products, completionDate: completionDateString)
-            
-            if success && (!order.isEquivalent(otherProducts: products) || order.placedDate != placedDateString || order.completionDate != completionDateString || order.state != newState || order.shippedPackages != shippingInfo) {
-                updated += 1
+        }
+        
+        group.wait()
+        
+        let refreshed = responses.map { (response, success, order) -> GrovemadeRetrievalInfo in
+            var shippedPackages: ShippedPackages? = nil
+            if let trackingNumber = response.trackingNumber,
+               let status = response.deliveryStatus,
+               let estimatedDelivery = response.estimatedDelivery,
+               let location = response.deliveryLocation {
+                
+                shippedPackages = ShippedPackages(trackingNumber: trackingNumber, status: status, estimatedDelivery: estimatedDelivery, location: location)
+            }
+            return GrovemadeRetrievalInfo(response: response, success: success, order: order, shippedPackages: shippedPackages)
+        }.reduce(0) { (result, retrievalInfo) -> Int in
+            let order = retrievalInfo.order
+            let newState = OrderState.fromProducts(shippedPackages: retrievalInfo.shippedPackages, products: retrievalInfo.response.products, completionDate: retrievalInfo.response.completionDate)
+            if retrievalInfo.success && (!order.isEquivalent(otherProducts: retrievalInfo.response.products) || order.placedDate != retrievalInfo.response.placedDate || order.completionDate != retrievalInfo.response.completionDate || order.state != newState || order.shippedPackages != retrievalInfo.shippedPackages) {
                 DispatchQueue.main.async {
                     withAnimation {
-                        order.products = products
-                        order.placedDate = placedDateString ?? ""
-                        order.completionDate = completionDateString
+                        order.products = retrievalInfo.response.products
+                        order.placedDate = retrievalInfo.response.placedDate
+                        order.completionDate = retrievalInfo.response.completionDate
                         order.state = newState
-                        order.shippedPackages = shippingInfo
+                        order.shippedPackages = retrievalInfo.shippedPackages
                         order.isUpdated = true
                     }
                 }
+                return result + 1
             }
+            return result
         }
-        if updated > 0 {
+        if refreshed > 0 {
             save()
         }
-        return updated
+        let after = DispatchTime.now()
+        let diff = after.uptimeNanoseconds - before.uptimeNanoseconds
+        let milliseconds = Int(diff / UInt64(1_000_000))
+        print("Refreshing orders took \(milliseconds)ms")
+        return refreshed
     }
 }
 
