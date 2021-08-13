@@ -30,18 +30,9 @@ enum OrderState: Int, Comparable, Codable {
         return lhs.rawValue < rhs.rawValue
     }
     
-    static func fromProducts(products: [Product], completionDate: String?) -> OrderState {
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "MM/dd/yyyy"
-        dateFormatter.timeZone = TimeZone.current
-        let latestDate = products
-            .map { $0.estimatedShippingDate.split(separator: " ").last }
-            .filter { $0 != nil }
-            .map { dateFormatter.date(from: String(describing: $0!))! }
-            .max()
-        
+    static func fromProducts(shippedPackages: ShippedPackages?, products: [Product], completionDate: String?) -> OrderState {
         var state = OrderState.ordered
-        if completionDate != nil && Date() > latestDate! {
+        if completionDate != nil, let shippingInfo = shippedPackages, shippingInfo.status == "Delivered" {
             state = .delivered
         } else if products.allSatisfy({ $0.quantity == 0 && $0.manufacturedQuantity == 0 && $0.shippedQuantity == 0 }) {
             state = .ordered
@@ -63,6 +54,7 @@ class Order: Identifiable, ObservableObject {
     @Published var placedDate: String
     @Published var completionDate: String?
     @Published var products: [Product] = []
+    @Published var shippedPackages: ShippedPackages?
     @Published var isUpdated = false
     
     var textDescription: String {
@@ -79,13 +71,14 @@ class Order: Identifiable, ObservableObject {
         }
     }
     
-    init(id: UUID, orderID: String, email: String, state: OrderState, placedDate: String, completionDate: String?) {
+    init(id: UUID, orderID: String, email: String, state: OrderState, placedDate: String, completionDate: String?, shippedPackages: ShippedPackages? = nil) {
         self.id = id
         self.orderID = orderID
         self.email = email
         self.state = state
         self.placedDate = placedDate
         self.completionDate = completionDate
+        self.shippedPackages = shippedPackages
     }
     
     #if DEBUG
@@ -117,7 +110,7 @@ class Order: Identifiable, ObservableObject {
 extension Order: CodableExportable {
     
     var toCodable: CodableOrder {
-        CodableOrder(id: id.uuidString, orderID: orderID, email: email, state: state, placedDate: placedDate, completionDate: completionDate, products: products.map { $0.toCodable })
+        return CodableOrder(id: id.uuidString, orderID: orderID, email: email, state: state, placedDate: placedDate, completionDate: completionDate, products: products.map({ $0.toCodable }), shippedPackages: shippedPackages?.toCodable)
     }
     
 }

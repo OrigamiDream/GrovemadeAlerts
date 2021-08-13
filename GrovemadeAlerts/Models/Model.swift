@@ -79,6 +79,7 @@ class Model: ObservableObject {
             var products: [Product] = []
             var placedDateString: String?
             var completionDateString: String?
+            var shippingInfo: ShippedPackages?
             var success = false
             
             let group = DispatchGroup()
@@ -98,14 +99,22 @@ class Model: ObservableObject {
                 placedDateString = response.placedDate
                 completionDateString = response.completionDate
                 products = response.products
+                
+                if let trackingNumber = response.trackingNumber,
+                   let status = response.deliveryStatus,
+                   let estimatedDelivery = response.estimatedDelivery,
+                   let location = response.deliveryLocation {
+                    
+                    shippingInfo = ShippedPackages(trackingNumber: trackingNumber, status: status, estimatedDelivery: estimatedDelivery, location: location)
+                }
             }
             
             group.wait()
             assert(done != nil)
             
-            let newState = OrderState.fromProducts(products: products, completionDate: completionDateString)
+            let newState = OrderState.fromProducts(shippedPackages: shippingInfo, products: products, completionDate: completionDateString)
             
-            if success && (!order.isEquivalent(otherProducts: products) || order.placedDate != placedDateString || order.completionDate != completionDateString || order.state != newState) {
+            if success && (!order.isEquivalent(otherProducts: products) || order.placedDate != placedDateString || order.completionDate != completionDateString || order.state != newState || order.shippedPackages != shippingInfo) {
                 updated += 1
                 DispatchQueue.main.async {
                     withAnimation {
@@ -113,6 +122,7 @@ class Model: ObservableObject {
                         order.placedDate = placedDateString ?? ""
                         order.completionDate = completionDateString
                         order.state = newState
+                        order.shippedPackages = shippingInfo
                         order.isUpdated = true
                     }
                 }

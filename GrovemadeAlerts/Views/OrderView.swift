@@ -37,6 +37,11 @@ struct OrderView: View {
                     ProductRow(product: product)
                 }
             }
+            if let shippedPackages = order.shippedPackages {
+                Section(header: Text("Shipped Packages")) {
+                    ShippedPackageRow(shippedPackages: Binding.constant(shippedPackages))
+                }
+            }
         }
         .listStyle(InsetGroupedListStyle())
         .navigationBarTitle("#\(order.orderID)", displayMode: .inline)

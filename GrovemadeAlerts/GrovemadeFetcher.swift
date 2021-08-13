@@ -15,6 +15,7 @@ enum GrovemadeRetrivalError: Error {
     case noOrderStatus
     case invalidOrderStatus
     case invalidQuantities
+    case invalidTrackingNumber
     case parserFailure(type: ExceptionType, message: String)
 }
 
@@ -22,6 +23,11 @@ struct GrovemadeResponse {
     let placedDate: String
     let completionDate: String?
     let products: [Product]
+    
+    let trackingNumber: String?
+    let deliveryStatus: String?
+    let estimatedDelivery: String?
+    let deliveryLocation: String?
 }
 
 func retrieveOrderInformationFromGrovemade<S>(queue: DispatchQueue, subject: S, orderID: String, email: String) where S: Subject, S.Failure == Error, S.Output == GrovemadeResponse {
@@ -91,11 +97,12 @@ fileprivate func parseGrovemadeResponseIntoComponents<S>(subject: S, responseStr
         let placedDate = try elements.select("h1 + p").first()?.text() ?? ""
         let completionDate = try elements.select("h1 + p + hr + p").first()?.text()
         
-        guard let table = try document.select(".order-status-result table.table.table-hover.table-striped.table-condensed").first() else {
+        let orderTables = try document.select(".order-status-result table.table.table-hover.table-striped.table-condensed")
+        guard let orderedItems = orderTables.first() else {
             subject.send(completion: .failure(GrovemadeRetrivalError.noOrderStatus))
             return
         }
-        let rows = try table.select("tbody .product-table-row")
+        let rows = try orderedItems.select("tbody .product-table-row")
         var products: [Product] = []
         for row in rows {
             let children = row.children().map { try! $0.text().trimmingCharacters(in: .whitespacesAndNewlines) }
@@ -129,7 +136,28 @@ fileprivate func parseGrovemadeResponseIntoComponents<S>(subject: S, responseStr
             
             products += [Product(id: UUID(), name: product, quantity: quantity, manufacturedQuantity: quantityReady, shippedQuantity: shipped, estimatedShippingDate: estimatedShippingDate, state: state)]
         }
-        subject.send(GrovemadeResponse(placedDate: placedDate, completionDate: completionDate, products: products))
+        var trackingNumber: String? = nil
+        var deliveryStatus: String? = nil
+        var estimatedDelivery: String? = nil
+        var deliveryLocation: String? = nil
+        
+        if orderTables.count > 1, let shippedPackages = orderTables.last() {
+            let columns = try shippedPackages.select("tbody tr td")
+            guard let trackingNumberElement = try columns[1].select("a[href]").first() else {
+                subject.send(completion: .failure(GrovemadeRetrivalError.invalidTrackingNumber))
+                return
+            }
+            trackingNumber = try trackingNumberElement.text().trimmingCharacters(in: .whitespacesAndNewlines)
+            let deliveryInfoElements = try columns[2].select("span")
+            let statusEl = deliveryInfoElements[0]
+            let estimatedDeliveryEl = deliveryInfoElements[1]
+            let locationEl = deliveryInfoElements[2]
+            
+            deliveryStatus = try statusEl.text().trimmingCharacters(in: .whitespacesAndNewlines)
+            estimatedDelivery = try estimatedDeliveryEl.text().trimmingCharacters(in: .whitespacesAndNewlines)
+            deliveryLocation = try locationEl.text().trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        subject.send(GrovemadeResponse(placedDate: placedDate, completionDate: completionDate, products: products, trackingNumber: trackingNumber, deliveryStatus: deliveryStatus, estimatedDelivery: estimatedDelivery, deliveryLocation: deliveryLocation))
         subject.send(completion: .finished)
     } catch Exception.Error(let type, let message) {
         subject.send(completion: .failure(GrovemadeRetrivalError.parserFailure(type: type, message: message)))

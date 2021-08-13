@@ -41,12 +41,20 @@ struct CodableOrder: Codable {
     let placedDate: String
     let completionDate: String?
     let products: [CodableProduct]
+    let shippedPackages: CodableShippedPackages?
 }
 
 struct CodableModel: Codable {
     let orders: [CodableOrder]
     let sortingOption: SortingOption
     let sortAscending: Bool
+}
+
+struct CodableShippedPackages: Codable {
+    let trackingNumber: String
+    let status: String
+    let estimatedDelivery: String
+    let location: String
 }
 
 extension CodableProduct: CodableImportable {
@@ -60,7 +68,7 @@ extension CodableProduct: CodableImportable {
 extension CodableOrder: CodableImportable {
     
     var toElement: Order {
-        let order = Order(id: UUID(uuidString: id)!, orderID: orderID, email: email, state: state, placedDate: placedDate, completionDate: completionDate)
+        let order = Order(id: UUID(uuidString: id)!, orderID: orderID, email: email, state: state, placedDate: placedDate, completionDate: completionDate, shippedPackages: shippedPackages?.toElement)
         order.products = products.map { $0.toElement }
         return order
     }
@@ -75,6 +83,14 @@ extension CodableModel: CodableImportable {
         model.sortingOption = sortingOption
         model.sortAscending = sortAscending
         return model
+    }
+    
+}
+
+extension CodableShippedPackages: CodableImportable {
+    
+    var toElement: ShippedPackages {
+        ShippedPackages(trackingNumber: trackingNumber, status: status, estimatedDelivery: estimatedDelivery, location: location)
     }
     
 }

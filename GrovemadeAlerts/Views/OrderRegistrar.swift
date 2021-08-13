@@ -43,6 +43,8 @@ struct OrderRegistrar: View {
     
     @State var dispatchQueue = DispatchQueue(label: "order-registrar-queue")
     
+    @State var shippedPackages: ShippedPackages?
+    
     var body: some View {
         NavigationView {
             List {
@@ -71,6 +73,11 @@ struct OrderRegistrar: View {
                             ProductRow(product: product)
                         }
                     }
+                    if let shippedPackages = shippedPackages {
+                        Section(header: Text("Shipped Packages")) {
+                            ShippedPackageRow(shippedPackages: Binding.constant(shippedPackages))
+                        }
+                    }
                 }
             }
             .listStyle(InsetGroupedListStyle())
@@ -82,8 +89,8 @@ struct OrderRegistrar: View {
             }, trailing: Button(action: {
                 presentationMode.wrappedValue.dismiss()
                 
-                let state = OrderState.fromProducts(products: retrievedProducts, completionDate: completionDate)
-                let order = Order(id: UUID(), orderID: orderID.value, email: email, state: state, placedDate: placedDate ?? "", completionDate: completionDate)
+                let state = OrderState.fromProducts(shippedPackages: shippedPackages, products: retrievedProducts, completionDate: completionDate)
+                let order = Order(id: UUID(), orderID: orderID.value, email: email, state: state, placedDate: placedDate ?? "", completionDate: completionDate, shippedPackages: shippedPackages)
                 order.products = [Product](retrievedProducts)
                 
                 withAnimation {
@@ -127,6 +134,7 @@ struct OrderRegistrar: View {
             
             var placedDateString: String?
             var completionDateString: String?
+            var shippingInfo: ShippedPackages?
             var products: [Product] = []
             let subject = PassthroughSubject<GrovemadeResponse, Error>()
             retrieveOrderInformationFromGrovemade(queue: queue, subject: subject, orderID: orderID.value, email: email)
@@ -163,6 +171,13 @@ struct OrderRegistrar: View {
                 placedDateString = response.placedDate
                 completionDateString = response.completionDate
                 products += response.products
+                if let trackingNumber = response.trackingNumber,
+                   let status = response.deliveryStatus,
+                   let estimatedDelivery = response.estimatedDelivery,
+                   let location = response.deliveryLocation {
+                    
+                    shippingInfo = ShippedPackages(trackingNumber: trackingNumber, status: status, estimatedDelivery: estimatedDelivery, location: location)
+                }
             }
             group.wait()
             
@@ -172,6 +187,7 @@ struct OrderRegistrar: View {
                     retrievedProducts = products
                     placedDate = placedDateString
                     completionDate = completionDateString
+                    shippedPackages = shippingInfo
                 }
                 
                 print("PlacedDate: \(placedDateString)")
