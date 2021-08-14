@@ -93,6 +93,7 @@ class Model: ObservableObject {
                 retrievalGroup.enter()
                 
                 var done: AnyCancellable?
+                var result: GrovemadeResponse?
                 var success = false
                 
                 let subject = PassthroughSubject<GrovemadeResponse, Error>()
@@ -106,10 +107,15 @@ class Model: ObservableObject {
                     }
                     retrievalGroup.leave()
                 } receiveValue: { response in
-                    responses += [(response, success, order)]
+                    result = response
                 }
                 assert(done != nil)
                 retrievalGroup.wait()
+                
+                if let result = result {
+                    responses += [(result, success, order)]
+                }
+                
                 group.leave()
             }
         }
