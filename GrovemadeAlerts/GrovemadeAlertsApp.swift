@@ -89,6 +89,9 @@ struct GrovemadeAlertsApp: App {
             let numRefreshed = model.refresh()
             print("\(numRefreshed) orders have been refreshed in background.")
             if numRefreshed > 0 {
+                DispatchQueue.main.sync {
+                    UIApplication.shared.applicationIconBadgeNumber = numRefreshed
+                }
                 UNUserNotificationCenter.current().getNotificationSettings { settings in
                     switch settings.authorizationStatus {
                     case .authorized, .provisional:

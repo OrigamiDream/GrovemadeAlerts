@@ -118,6 +118,9 @@ struct ContentView: View {
                 dispatchQueue.async {
                     let numRefreshed = model.refresh()
                     print("\(numRefreshed) orders have been refreshed.")
+                    DispatchQueue.main.sync {
+                        UIApplication.shared.applicationIconBadgeNumber = numRefreshed
+                    }
                     DispatchQueue.main.async {
                         withAnimation {
                             isUpdating = false

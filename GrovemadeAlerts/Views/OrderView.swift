@@ -46,7 +46,10 @@ struct OrderView: View {
         .listStyle(InsetGroupedListStyle())
         .navigationBarTitle("#\(order.orderID)", displayMode: .inline)
         .onAppear {
-            order.isUpdated = false
+            if order.isUpdated {
+                UIApplication.shared.applicationIconBadgeNumber = max(UIApplication.shared.applicationIconBadgeNumber - 1, 0);
+                order.isUpdated = false
+            }
         }
     }
 }

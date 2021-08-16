@@ -156,6 +156,10 @@ fileprivate func parseGrovemadeResponseIntoComponents<S>(subject: S, responseStr
             deliveryStatus = try statusEl.text().trimmingCharacters(in: .whitespacesAndNewlines)
             estimatedDelivery = try estimatedDeliveryEl.text().trimmingCharacters(in: .whitespacesAndNewlines)
             deliveryLocation = try locationEl.text().trimmingCharacters(in: .whitespacesAndNewlines)
+            
+            if deliveryStatus == "Cleared Customs" {
+                deliveryLocation = " "
+            }
         }
         subject.send(GrovemadeResponse(placedDate: placedDate, completionDate: completionDate, products: products, trackingNumber: trackingNumber, deliveryStatus: deliveryStatus, estimatedDelivery: estimatedDelivery, deliveryLocation: deliveryLocation))
         subject.send(completion: .finished)
