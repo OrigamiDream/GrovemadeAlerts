@@ -48,6 +48,19 @@ struct ContentView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Menu {
+                        Button(action: {
+                            if !isUpdating {
+                                triggerUpdate = true
+                            }
+                        }) {
+                            if isUpdating {
+                                Text("Refreshing...")
+                            } else {
+                                Text("Refresh")
+                            }
+                        }
+                        .disabled(isUpdating)
+                        Divider()
                         ForEach(SortingOption.allCases, id: \.self) { option in
                             Button(action: {
                                 DispatchQueue.main.async {
