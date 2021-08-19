@@ -143,22 +143,24 @@ fileprivate func parseGrovemadeResponseIntoComponents<S>(subject: S, responseStr
         
         if orderTables.count > 1, let shippedPackages = orderTables.last() {
             let columns = try shippedPackages.select("tbody tr td")
-            guard let trackingNumberElement = try columns[1].select("a[href]").first() else {
-                subject.send(completion: .failure(GrovemadeRetrivalError.invalidTrackingNumber))
-                return
-            }
-            trackingNumber = try trackingNumberElement.text().trimmingCharacters(in: .whitespacesAndNewlines)
-            let deliveryInfoElements = try columns[2].select("span")
-            let statusEl = deliveryInfoElements[0]
-            let estimatedDeliveryEl = deliveryInfoElements[1]
-            let locationEl = deliveryInfoElements[2]
-            
-            deliveryStatus = try statusEl.text().trimmingCharacters(in: .whitespacesAndNewlines)
-            estimatedDelivery = try estimatedDeliveryEl.text().trimmingCharacters(in: .whitespacesAndNewlines)
-            deliveryLocation = try locationEl.text().trimmingCharacters(in: .whitespacesAndNewlines)
-            
-            if deliveryStatus == "Cleared Customs" {
-                deliveryLocation = " "
+            if columns.count > 1 {
+                guard let trackingNumberElement = try columns[1].select("a[href]").first() else {
+                    subject.send(completion: .failure(GrovemadeRetrivalError.invalidTrackingNumber))
+                    return
+                }
+                trackingNumber = try trackingNumberElement.text().trimmingCharacters(in: .whitespacesAndNewlines)
+                let deliveryInfoElements = try columns[2].select("span")
+                let statusEl = deliveryInfoElements[0]
+                let estimatedDeliveryEl = deliveryInfoElements[1]
+                let locationEl = deliveryInfoElements[2]
+                
+                deliveryStatus = try statusEl.text().trimmingCharacters(in: .whitespacesAndNewlines)
+                estimatedDelivery = try estimatedDeliveryEl.text().trimmingCharacters(in: .whitespacesAndNewlines)
+                deliveryLocation = try locationEl.text().trimmingCharacters(in: .whitespacesAndNewlines)
+                
+                if deliveryStatus == "Cleared Customs" {
+                    deliveryLocation = " "
+                }
             }
         }
         subject.send(GrovemadeResponse(placedDate: placedDate, completionDate: completionDate, products: products, trackingNumber: trackingNumber, deliveryStatus: deliveryStatus, estimatedDelivery: estimatedDelivery, deliveryLocation: deliveryLocation))
