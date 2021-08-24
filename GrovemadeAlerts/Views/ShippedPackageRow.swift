@@ -22,9 +22,9 @@ struct ShippedPackageRow: View {
                     }
                 }
             }
-            OrderInfoField(stringValue: $shippedPackages.status, title: "Status", placeholder: "Status", keyboardType: .default, disabled: true) {}
-            OrderInfoField(stringValue: $shippedPackages.estimatedDelivery, title: "Estimated Delivery", placeholder: "Estimated Delivery", keyboardType: .default, disabled: true) {}
-            OrderInfoField(stringValue: $shippedPackages.location, title: "Location", placeholder: "Location", keyboardType: .default, disabled: true) {}
+            OrderInfoField(stringValue: $shippedPackages.status, title: "Status", placeholder: "", keyboardType: .default, disabled: true) {}
+            OrderInfoField(stringValue: $shippedPackages.estimatedDelivery, title: "Estimated Delivery", placeholder: "", keyboardType: .default, disabled: true) {}
+            OrderInfoField(stringValue: $shippedPackages.location, title: "Location", placeholder: "", keyboardType: .default, disabled: true) {}
         }
     }
 }
