@@ -35,6 +35,9 @@ struct ContentView: View {
                         }
                     }
                     .listStyle(InsetGroupedListStyle())
+                    .refreshable {
+                        model.refresh()
+                    }
                 } else {
                     VStack {
                         Text("No Orders")
