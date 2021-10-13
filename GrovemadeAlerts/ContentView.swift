@@ -20,6 +20,10 @@ struct ContentView: View {
     @State var lastBackgroundEntered = Date()
     @State var triggerUpdate = false
     
+    func refreshAll() async {
+        model.refresh()
+    }
+    
     var body: some View {
         NavigationView {
             Group {
@@ -36,7 +40,7 @@ struct ContentView: View {
                     }
                     .listStyle(InsetGroupedListStyle())
                     .refreshable {
-                        model.refresh()
+                        await refreshAll()
                     }
                 } else {
                     VStack {

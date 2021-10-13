@@ -15,6 +15,7 @@ enum RetrievalProcessResult {
     case errorOccurrance
     case unexpectedError
     case alreadyExists
+    case internalServerError
 }
 
 enum ProgressState {
@@ -153,6 +154,9 @@ struct OrderRegistrar: View {
                         switch retrievalError {
                         case .noOrderStatus:
                             result = .invalid
+                            break
+                        case .invalidStatusCode:
+                            result = .internalServerError
                             break
                         default:
                             print("An error has occurred: \(retrievalResult)")

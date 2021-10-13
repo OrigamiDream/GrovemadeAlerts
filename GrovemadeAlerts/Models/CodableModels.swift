@@ -26,10 +26,8 @@ protocol CodableImportable {
 struct CodableProduct: Codable {
     let id: String
     let name: String
+    let image: URL?
     let quantity: UInt
-    let manufacturedQuantity: UInt
-    let shippedQuantity: UInt
-    let estimatedShippingDate: String
     let state: ProductState
 }
 
@@ -60,7 +58,7 @@ struct CodableShippedPackages: Codable {
 extension CodableProduct: CodableImportable {
     
     var toElement: Product {
-        Product(id: UUID(uuidString: id)!, name: name, quantity: quantity, manufacturedQuantity: manufacturedQuantity, shippedQuantity: shippedQuantity, estimatedShippingDate: estimatedShippingDate, state: state)
+        Product(id: UUID(uuidString: id)!, name: name, image: image, quantity: quantity, state: state)
     }
     
 }

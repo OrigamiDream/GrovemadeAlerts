@@ -68,6 +68,16 @@ struct OrderRegistrarResult: View {
                                 .foregroundColor(.gray)
                         }
                         .padding()
+                    } else if retrievalResult == .internalServerError {
+                        VStack(alignment: .leading) {
+                            Text("Internal Server Error")
+                                .font(.headline)
+                            
+                            Text("The server did not respond.")
+                                .font(.footnote)
+                                .foregroundColor(.gray)
+                        }
+                        .padding()
                     } else {
                         VStack(alignment: .leading) {
                             Text("No Order Status")

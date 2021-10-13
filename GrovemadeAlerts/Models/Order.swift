@@ -31,14 +31,24 @@ enum OrderState: Int, Comparable, Codable {
     }
     
     static func fromProducts(shippedPackages: ShippedPackages?, products: [Product], completionDate: String?) -> OrderState {
+//        var state = OrderState.ordered
+//        if completionDate != nil, let shippingInfo = shippedPackages, shippingInfo.status == "Delivered" {
+//            state = .delivered
+//        } else if products.allSatisfy({ $0.quantity == 0 && $0.manufacturedQuantity == 0 && $0.shippedQuantity == 0 }) {
+//            state = .ordered
+//        } else if products.contains(where: { $0.manufacturedQuantity > 0 && $0.shippedQuantity == 0 }) {
+//            state = .manufacturing
+//        } else if products.allSatisfy({ $0.shippedQuantity == $0.manufacturedQuantity }) {
+//            state = .shipped
+//        }
         var state = OrderState.ordered
-        if completionDate != nil, let shippingInfo = shippedPackages, shippingInfo.status == "Delivered" {
+        if let shippedPackages = shippedPackages, shippedPackages.status == "Delivered" {
             state = .delivered
-        } else if products.allSatisfy({ $0.quantity == 0 && $0.manufacturedQuantity == 0 && $0.shippedQuantity == 0 }) {
+        } else if products.allSatisfy({ $0.state == .inProduction }) {
             state = .ordered
-        } else if products.contains(where: { $0.manufacturedQuantity > 0 && $0.shippedQuantity == 0 }) {
-            state = .manufacturing
-        } else if products.allSatisfy({ $0.shippedQuantity == $0.manufacturedQuantity }) {
+//        } else if products.contains(where: { $0.state == .manufactured }) {
+//            state = .manufacturing
+        } else if shippedPackages?.status != "Delivered" {
             state = .shipped
         }
         return state
@@ -63,9 +73,9 @@ class Order: Identifiable, ObservableObject {
         case .ordered:
             return "Just ordered \(productCount) products from Grovemade."
         case .manufacturing:
-            return "\(products.compactMap { $0.manufacturedQuantity }.reduce(0, +)) out of \(productCount) products are being manufactured."
+            return "\(products.filter({ $0.state == .inProduction }).compactMap { $0.quantity }.reduce(0, +)) out of \(productCount) products are being manufactured."
         case .shipped:
-            return "\(products.compactMap { $0.shippedQuantity }.reduce(0, +)) out of \(productCount) products had been shipped."
+            return "\(products.filter({ $0.state == .shipped }).compactMap { $0.quantity }.reduce(0, +)) out of \(productCount) products had been shipped."
         case .delivered:
             return "\(productCount) products had been delivered."
         }
@@ -97,7 +107,7 @@ class Order: Identifiable, ObservableObject {
                 equals = false
                 break
             }
-            if product.state != otherProduct.state || product.fulfilledQuantity != otherProduct.fulfilledQuantity || product.estimatedShippingDate != otherProduct.estimatedShippingDate {
+            if product.state != otherProduct.state {
                 equals = false
                 break
             }

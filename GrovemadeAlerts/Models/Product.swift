@@ -8,43 +8,37 @@
 import SwiftUI
 
 enum ProductState: Int, Codable {
-    case ordered = 0
-    case manufactured = 1
+    case inProduction = 0
+//    case manufactured = 1
     case shipped = 2
+    
+    var description: String {
+        switch self {
+        case .inProduction:
+            return "In Production"
+        case .shipped:
+            return "Shipped"
+        }
+    }
 }
 
 class Product: Identifiable, ObservableObject {
     
     let id: UUID
     @Published var name: String
+    @Published var image: URL?
     @Published var quantity: UInt
-    @Published var manufacturedQuantity: UInt
-    @Published var shippedQuantity: UInt
-    @Published var estimatedShippingDate: String
     @Published var state: ProductState
-    
-    var fulfilledQuantity: UInt {
-        switch state {
-        case .manufactured:
-            return manufacturedQuantity
-        case .shipped:
-            return shippedQuantity
-        case .ordered:
-            return 0
-        }
-    }
     
     var displayName: String {
         return name.components(separatedBy: "SKU:").first?.trimmingCharacters(in: .whitespacesAndNewlines).replacingOccurrences(of: ": TBD", with: "") ?? "Invalid"
     }
     
-    init(id: UUID, name: String, quantity: UInt, manufacturedQuantity: UInt, shippedQuantity: UInt, estimatedShippingDate: String, state: ProductState) {
+    init(id: UUID, name: String, image: URL?, quantity: UInt, state: ProductState) {
         self.id = id
         self.name = name
-        self.estimatedShippingDate = estimatedShippingDate
+        self.image = image
         self.quantity = quantity
-        self.manufacturedQuantity = manufacturedQuantity
-        self.shippedQuantity = shippedQuantity
         self.state = state
     }
 }
@@ -52,7 +46,7 @@ class Product: Identifiable, ObservableObject {
 extension Product: CodableExportable {
     
     var toCodable: CodableProduct {
-        CodableProduct(id: id.uuidString, name: name, quantity: quantity, manufacturedQuantity: manufacturedQuantity, shippedQuantity: shippedQuantity, estimatedShippingDate: estimatedShippingDate, state: state)
+        CodableProduct(id: id.uuidString, name: name, image: image, quantity: quantity, state: state)
     }
     
 }
